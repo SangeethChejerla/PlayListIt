@@ -5,10 +5,7 @@
   --font-mono: var(--font-geist-mono);
 }
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+
 
 @media (prefers-color-scheme: dark) {
   :root {
@@ -17,8 +14,51 @@
   }
 }
 
+
+:root {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+
+  --primary: 270 100% 60%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 320 100% 60%;
+  --secondary-foreground: 0 0% 100%;
+
+  --accent: 180 100% 50%;
+  --accent-foreground: 0 0% 100%;
+
+  --muted: 240 5% 25%;
+  --muted-foreground: 240 5% 65%;
+
+  --card: 240 10% 10%;
+  --card-foreground: 0 0% 100%;
+
+  --border: 240 5% 26%;
+  --input: 240 5% 20%;
+}
+
 body {
-  color: var(--foreground);
-  background: var(--background);
+  background-color: black;
+  color: white;
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(138, 43, 226, 0.5);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(138, 43, 226, 0.8);
+}
+
