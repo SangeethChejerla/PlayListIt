@@ -9,16 +9,21 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "framer": "^2.4.1",
+    "framer-motion": "^12.4.7",
+    "howler": "^2.2.4",
+    "lucide-react": "^0.477.0",
+    "motion": "^12.4.7",
+    "next": "15.2.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "next": "15.2.0"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4"
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }
