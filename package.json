@@ -9,6 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@radix-ui/react-slider": "^1.2.3",
+    "@radix-ui/react-slot": "^1.1.2",
+    "@types/howler": "^2.2.12",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "framer": "^2.4.1",
     "framer-motion": "^12.4.7",
     "howler": "^2.2.4",
@@ -16,7 +21,8 @@
     "motion": "^12.4.7",
     "next": "15.2.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^3.0.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

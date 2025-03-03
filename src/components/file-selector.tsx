@@ -6,12 +6,34 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import { FolderOpen } from "lucide-react"
 
+// Properly type the File System Access API
+declare global {
+  interface Window {
+    showDirectoryPicker?: (options?: { mode: string }) => Promise<FileSystemDirectoryHandle>;
+  }
+}
+
+interface FileSystemDirectoryHandle {
+  kind: 'directory';
+  name: string;
+  entries: () => AsyncIterable<[string, FileSystemHandle]>;
+}
+
+interface FileSystemFileHandle {
+  kind: 'file';
+  name: string;
+  getFile: () => Promise<File>;
+}
+
+type FileSystemHandle = FileSystemDirectoryHandle | FileSystemFileHandle;
+
 interface FileSelectorProps {
   onFileSelect: (files: FileList) => void
 }
 
 export default function FileSelector({ onFileSelect }: FileSelectorProps) {
   const [isDragging, setIsDragging] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -37,39 +59,66 @@ export default function FileSelector({ onFileSelect }: FileSelectorProps) {
   }
 
   const handleDirectorySelect = async () => {
-    try {
-      // @ts-ignore - FileSystemDirectoryHandle is not in the TypeScript types yet
-      const directoryHandle = await window.showDirectoryPicker()
-      const audioFiles: File[] = []
+    // Check if File System Access API is available
+    if (typeof window === 'undefined' || !window.showDirectoryPicker) {
+      setError("Your browser doesn't support folder selection. Try dragging files instead.")
+      return;
+    }
 
-      // Recursive function to get all files in a directory
-      async function getFilesRecursively(dirHandle: any, path = "") {
-        for await (const entry of dirHandle.values()) {
-          if (entry.kind === "file") {
-            const file = await entry.getFile()
-            if (file.type.includes("audio")) {
-              // Create a new file with the path included
-              const fileWithPath = new File([file], `${path}${file.name}`, {
-                type: file.type,
-                lastModified: file.lastModified,
-              })
-              audioFiles.push(fileWithPath)
+    try {
+      const dirHandle = await window.showDirectoryPicker({
+        mode: "read",
+      });
+
+      const audioFiles: File[] = [];
+
+      // Recursive function to get all files
+      async function getFilesRecursively(handle: FileSystemDirectoryHandle, path = "") {
+        for await (const entry of handle.entries()) {
+          const [name, fileHandle] = entry;
+          if (fileHandle.kind === "file") {
+            try {
+              const file = await (fileHandle as FileSystemFileHandle).getFile();
+              if (file.type.includes("audio")) {
+                audioFiles.push(file);
+              }
+            } catch (err) {
+              console.error("Error accessing file:", err);
             }
-          } else if (entry.kind === "directory") {
-            // Recursively get files from subdirectories
-            await getFilesRecursively(entry, `${path}${entry.name}/`)
+          } else if (fileHandle.kind === "directory") {
+            await getFilesRecursively(fileHandle as FileSystemDirectoryHandle, `${path}${fileHandle.name}/`);
           }
         }
       }
 
-      await getFilesRecursively(directoryHandle)
+      await getFilesRecursively(dirHandle);
 
-      // Convert array to FileList-like object
-      const dataTransfer = new DataTransfer()
-      audioFiles.forEach((file) => dataTransfer.items.add(file))
-      onFileSelect(dataTransfer.files)
+      if (audioFiles.length > 0) {
+        if (typeof DataTransfer === 'undefined') {
+          setError("Your browser doesn't fully support this feature. Try dragging files instead.");
+          return;
+        }
+        
+        // Convert array to FileList-like object
+        const dataTransfer = new DataTransfer();
+        audioFiles.forEach((file) => dataTransfer.items.add(file));
+        onFileSelect(dataTransfer.files);
+      } else {
+        setError("No audio files found in the selected directory");
+      }
     } catch (error) {
-      console.error("Error selecting directory:", error)
+      console.error("Error selecting directory:", error);
+      if (error instanceof Error) {
+        if (error.name === "SecurityError") {
+          setError("Permission denied to access directory");
+        } else if (error.name === "NotAllowedError") {
+          setError("Permission to access directory was denied");
+        } else if (error.name !== "AbortError") { // Don't show error if user just canceled
+          setError(`Failed to select directory: ${error.message}`);
+        }
+      } else {
+        setError("Failed to select directory. Please try again");
+      }
     }
   }
 
@@ -105,6 +154,12 @@ export default function FileSelector({ onFileSelect }: FileSelectorProps) {
         </div>
       </motion.div>
 
+      {error && (
+        <motion.div className="mt-2 text-red-400 text-sm text-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          {error}
+        </motion.div>
+      )}
+
       <div className="mt-4 flex justify-center">
         <motion.button
           onClick={handleDirectorySelect}
@@ -118,4 +173,3 @@ export default function FileSelector({ onFileSelect }: FileSelectorProps) {
     </div>
   )
 }
-

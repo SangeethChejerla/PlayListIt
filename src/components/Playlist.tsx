@@ -15,7 +15,7 @@ interface PlaylistProps {
   playlists: { name: string; tracks: Track[] }[]
   onCreatePlaylist: (name: string) => void
   onAddToPlaylist: (playlistIndex: number, track: Track) => void
-  onBack: () => void
+  onBackToPlayer: () => void
 }
 
 export default function Playlist({
@@ -25,7 +25,7 @@ export default function Playlist({
   playlists,
   onCreatePlaylist,
   onAddToPlaylist,
-  onBack,
+  onBackToPlayer,
 }: PlaylistProps) {
   const [newPlaylistName, setNewPlaylistName] = useState("")
   const [showNewPlaylistInput, setShowNewPlaylistInput] = useState(false)
@@ -66,7 +66,7 @@ export default function Playlist({
     <div className="w-full bg-gray-900 bg-opacity-50 backdrop-blur-lg rounded-xl p-6">
       <div className="flex items-center mb-6">
         <motion.button
-          onClick={onBack}
+          onClick={onBackToPlayer}
           className="p-2 text-white rounded-full hover:bg-gray-800 mr-4"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -105,7 +105,10 @@ export default function Playlist({
                   >
                     <div className="w-8 h-8 flex items-center justify-center mr-3">
                       {index === currentTrackIndex ? (
-                        <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse" />
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-purple-500 rounded-full animate-ping opacity-75"></div>
+                          <div className="relative w-3 h-3 bg-purple-400 rounded-full"></div>
+                        </div>
                       ) : (
                         <Music className="w-5 h-5 text-gray-400" />
                       )}
