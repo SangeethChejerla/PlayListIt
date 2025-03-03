@@ -33,6 +33,8 @@ export default function MusicPlayer() {
   const animationRef = useRef<number>(0)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
+  const audioSourceRef = useRef<MediaElementAudioSourceNode | null>(null)
+  const connectedNodeRef = useRef<HTMLMediaElement | null>(null)
 
   const currentTrack = tracks[currentTrackIndex]
 
@@ -44,9 +46,19 @@ export default function MusicPlayer() {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current)
       }
+      if (audioSourceRef.current) {
+        try {
+          audioSourceRef.current.disconnect()
+        } catch (e) {
+          // Source might not be connected
+        }
+      }
       if (audioContextRef.current) {
         audioContextRef.current.close()
       }
+      // Reset references
+      audioSourceRef.current = null
+      connectedNodeRef.current = null
     }
   }, [])
 
@@ -68,10 +80,13 @@ export default function MusicPlayer() {
         html5: true,
         volume: volume,
         onload: () => {
-          setDuration(sound.duration())
-          setupAudioAnalyser(sound)
+          const duration = sound.duration();
+          if (duration && duration > 0) {
+            setDuration(duration);
+          }
+          setupAudioAnalyser(sound);
           // Auto-play when a track is loaded
-          sound.play()
+          sound.play();
         },
         onplay: () => {
           setIsPlaying(true)
@@ -104,23 +119,39 @@ export default function MusicPlayer() {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
     }
 
-    // Clean up previous connections
-    if (analyserRef.current) {
-      analyserRef.current.disconnect()
-    }
-
     try {
-      // Create and configure analyser node
-      analyserRef.current = audioContextRef.current.createAnalyser()
-      analyserRef.current.fftSize = 256
+      // Create and configure analyser node if it doesn't exist
+      if (!analyserRef.current) {
+        analyserRef.current = audioContextRef.current.createAnalyser()
+        analyserRef.current.fftSize = 256
+      }
 
       // Get the current Howler audio node
       const audioNode = (sound as any)._sounds[0]._node
-
+      
+      // Check if we're already connected to this node
+      if (connectedNodeRef.current === audioNode) {
+        // We're already connected to this node, no need to reconnect
+        return
+      }
+      
+      // If we have a previous source, disconnect it
+      if (audioSourceRef.current) {
+        try {
+          audioSourceRef.current.disconnect()
+        } catch (e) {
+          // Source might not be connected
+        }
+      }
+      
       // Create and connect the audio source
       const source = audioContextRef.current.createMediaElementSource(audioNode)
       source.connect(analyserRef.current)
       analyserRef.current.connect(audioContextRef.current.destination)
+      
+      // Store references to current source and node
+      audioSourceRef.current = source
+      connectedNodeRef.current = audioNode
 
       // Update audio data for visualization
       const updateAudioData = () => {
